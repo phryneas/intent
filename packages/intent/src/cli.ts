@@ -110,7 +110,7 @@ function createCli(
     .option(
       '--answer <question=value>',
       'Answer a question; repeat for multiple answers',
-      { type: [String] },
+      { type: [String], default: [] },
     )
     .option('--reset', 'Clear saved configuration before configuring the skill')
     .option('--global', 'Resolve project packages, then global packages')

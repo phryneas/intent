@@ -99,7 +99,11 @@ await module.link(() => {
     'Transform imports are disabled; bundle your transform into one file',
   )
 })
-await module.evaluate({ timeout: 1000 })
+const evaluation = module.evaluate({ timeout: 1000 })
+// Older Node releases queue evaluation's completion in the VM context when
+// microtaskMode is afterEvaluate. Drain it before awaiting from the host.
+new Script('').runInContext(context, { timeout: 1000 })
+await evaluation
 context.transform = module.namespace
 context.operation = request.operation
 const result = new Script(

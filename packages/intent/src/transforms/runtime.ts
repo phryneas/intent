@@ -251,7 +251,7 @@ export function runTransform(options: {
     )
       throw new Error('Transform must return a string of at most 4 MiB')
     validateFiles(output.files)
-    if (JSON.stringify(config) !== JSON.stringify(output.files))
+    if (options.reset || JSON.stringify(config) !== JSON.stringify(output.files))
       commitConfig(options.configDir, output.files)
     return output.content
   } finally {

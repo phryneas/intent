@@ -127,6 +127,7 @@ describe.skipIf(Number(process.versions.node.split('.')[0]) < 22)(
       )
       const failed = run(cli, ['configure', 'example#guide', '--reset'])
       expect(failed.status).not.toBe(0)
+      expect(failed.stderr).toContain('Abort reset')
       expect(JSON.parse(run(cli, ['load', 'example#guide']).stdout)).toEqual([
         'saved.json',
       ])
@@ -141,6 +142,32 @@ describe.skipIf(Number(process.versions.node.split('.')[0]) < 22)(
       expect(reset.stdout).toBe('Reset')
       expect(JSON.parse(run(cli, ['load', 'example#guide']).stdout)).toEqual([
         'new.json',
+      ])
+    })
+
+    it('allows reset and stdin-only configuration without answer flags', () => {
+      expect(
+        run(cli, ['configure', 'example#guide', '--answer', 'Q1=old']).status,
+      ).toBe(0)
+      writeFileSync(
+        join(skillDir, 'scripts/transform.mjs'),
+        `
+        export function configure({ config, answers, stdin }) {
+          if (answers.length) throw new Error('Expected no answers');
+          if (!stdin && config.listFiles().length) throw new Error('Expected reset');
+          if (stdin) config.writeFile('stdin.txt', stdin);
+          return 'Saved';
+        }
+        export function load({ config }) { return JSON.stringify(config.listFiles()); }
+      `,
+      )
+      const reset = run(cli, ['configure', 'example#guide', '--reset'])
+      expect(reset.status, reset.stderr).toBe(0)
+      expect(JSON.parse(run(cli, ['load', 'example#guide']).stdout)).toEqual([])
+      const configured = run(cli, ['configure', 'example#guide'], 'preferences')
+      expect(configured.status, configured.stderr).toBe(0)
+      expect(JSON.parse(run(cli, ['load', 'example#guide']).stdout)).toEqual([
+        'stdin.txt',
       ])
     })
 
